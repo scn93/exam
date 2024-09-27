@@ -1,0 +1,10 @@
+.
+├── app.py
+├── docker-compose.yml
+├── Dockerfile
+├── nginx.conf
+├── output.txt
+├── README.md
+└── requirements.txt
+
+0 directories, 7 files
