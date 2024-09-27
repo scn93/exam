@@ -3,15 +3,23 @@ import groq
 from groq import Groq
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
+from dotenv import load_dotenv
+
+# Charger les variables d'environnement à partir du fichier .env (optionnel)
+load_dotenv()
 
 app = FastAPI()
 
-# Configure the default for all requests:
+# Vérifier si l'API Key est définie dans les variables d'environnement
+api_key = os.environ.get("GROQ_API_KEY")
+if not api_key:
+    raise ValueError("La clé API GROQ_API_KEY n'est pas définie. Vérifiez vos variables d'environnement.")
+
+# Configure the default client for all requests
 client = Groq(
-    api_key=os.environ.get("GROQ_API_KEY"),
-    # 20 seconds (default is 1 minute)
-    timeout=20.0,
-    max_retries=1,
+    api_key=api_key,
+    timeout=20.0,  # Temps d'attente par défaut : 20 secondes
+    max_retries=1  # Nombre maximum de tentatives
 )
 
 class Prompt(BaseModel):
@@ -35,13 +43,13 @@ async def post_chat(prompt: Prompt):
                     "content": prompt.prompt,
                 },
             ],
-            model="mixtral-8x7b-32768",
+            model="mixtral-8x7b-32768",  # Spécifiez le modèle souhaité
         )
         return {"response": chat_completion.choices[0].message.content}
 
     except groq.APIConnectionError as e:
         print("The server could not be reached")
-        print(e.__cause__)  # an underlying Exception, likely raised within httpx.
+        print(e.__cause__)  # Cause sous-jacente, probablement levée dans httpx.
         raise HTTPException(status_code=500, detail="API Connection Error")
 
     except groq.RateLimitError as e:
@@ -57,3 +65,4 @@ async def post_chat(prompt: Prompt):
 if __name__ == "__main__":
     import uvicorn
     uvicorn.run(app, host="0.0.0.0", port=5000)
+
